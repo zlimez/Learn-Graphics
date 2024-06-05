@@ -2,12 +2,14 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "shader.hpp"
-#include "triangles.hpp"
+#include "models.hpp"
 #include "texture.hpp"
+#include "lightSrc.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "camera.hpp"
+#include "logger.hpp"
 
 struct MouseInput {
     Camera* cam;
@@ -100,31 +102,37 @@ int main() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Shader shader("../src/shaders/fullVtx.glsl", "../src/shaders/textureEx.glsl");
+    // tutTexture(shader);
+    Shader lightingShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightObj.glsl"), lightSrcShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightSrc.glsl");
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    LightSrc lightSrc(lightPos, lightColor);
 
-    // Shader shader("../src/shaders/vtxToColor.glsl", "../src/shaders/colorAsVtx.glsl");
-    // Shader shader("../src/shaders/xOffset.glsl", "../src/shaders/colorAsVtx.glsl");
-    // shader.use();
-    // shader.setFloat("xOffset", 0.5f);
-    // Shader shader("../src/shaders/textureVtx.glsl", "../src/shaders/textureEx.glsl");
-    Shader shader("../src/shaders/fullVtx.glsl", "../src/shaders/textureEx.glsl");
-    tutTexture(shader);
-    // int vtxCount = createRect();
-    int vtxCount = createCube();
+    lightingShader.use();
+    lightingShader.setVec3("lightColor", lightColor);
+    lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+    lightSrcShader.use();
+    lightSrcShader.setVec3("lightColor", lightColor);
+
+    auto cube = createCube(), lightCube = createCube();
+    int cubeVAO = cube.second, cubeVtxCount = cube.first;
+    int lightCubeVAO = lightCube.second, lightCubeVtxCount = lightCube.first;
     float visibilityRatio = 0.5f;
-    glm::vec3 cubePositions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f), 
-        glm::vec3( 2.0f,  5.0f, -15.0f), 
-        glm::vec3(-1.5f, -2.2f, -2.5f),  
-        glm::vec3(-3.8f, -2.0f, -12.3f),  
-        glm::vec3( 2.4f, -0.4f, -3.5f),  
-        glm::vec3(-1.7f,  3.0f, -7.5f),  
-        glm::vec3( 1.3f, -2.0f, -2.5f),  
-        glm::vec3( 1.5f,  2.0f, -2.5f), 
-        glm::vec3( 1.5f,  0.2f, -1.5f), 
-        glm::vec3(-1.3f,  1.0f, -1.5f)  
-    };
+    // glm::vec3 cubePositions[] = {
+    //     glm::vec3( 0.0f,  0.0f,  0.0f), 
+    //     glm::vec3( 2.0f,  5.0f, -15.0f), 
+    //     glm::vec3(-1.5f, -2.2f, -2.5f),  
+    //     glm::vec3(-3.8f, -2.0f, -12.3f),  
+    //     glm::vec3( 2.4f, -0.4f, -3.5f),  
+    //     glm::vec3(-1.7f,  3.0f, -7.5f),  
+    //     glm::vec3( 1.3f, -2.0f, -2.5f),  
+    //     glm::vec3( 1.5f,  2.0f, -2.5f), 
+    //     glm::vec3( 1.5f,  0.2f, -1.5f), 
+    //     glm::vec3(-1.3f,  1.0f, -1.5f)  
+    // };
 
-    Camera cam(glm::vec3(0.0f, 0.0f, 3.0f), -90.0f, 0.0f);
+    Camera cam(glm::vec3(0.0f, 0.0f, 3.0f), -90.0f, 0.0f, false);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     MouseInput mouseInput = { &cam };
     glfwSetWindowUserPointer(window, &mouseInput);
@@ -140,7 +148,7 @@ int main() {
         processInput(window, visibilityRatio, cam, deltaTime);
         glClear(GL_COLOR_BUFFER_BIT);
         glClear(GL_DEPTH_BUFFER_BIT);
-        shader.setFloat("visibilityRatio", visibilityRatio);
+        // shader.setFloat("visibilityRatio", visibilityRatio);
 
         // glm::mat4 trans = glm::mat4(1.0f);
         // trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
@@ -153,18 +161,31 @@ int main() {
         // trans2 = glm::scale(trans2, sinf((float)glfwGetTime()) * glm::vec3(0.5, 0.5, 0.5) + glm::vec3(1.0, 1.0, 1.0));
         // shader.setMatrix("transform", trans2);
         // glDrawElements(GL_TRIANGLES, vtxCount, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(cubeVAO);
+        lightingShader.use();
+        lightingShader.setMatrix("view", cam.getViewMatrix());
+        lightingShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
+        lightingShader.setMatrix("model", glm::mat4(1.0f));
+        glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
-        shader.setMatrix("view", cam.getViewMatrix());
-        shader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
+        glBindVertexArray(lightCubeVAO);
+        lightSrcShader.use();
+        lightSrcShader.setMatrix("view", cam.getViewMatrix());
+        lightSrcShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightSrcShader.setMatrix("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, lightCubeVtxCount);
 
-        for (unsigned int i = 0; i < 10; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, (i % 3 == 0 ? (float)glfwGetTime() : 0.0f) * glm::radians(60.0f) + glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            shader.setMatrix("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, vtxCount);
-        }
+        // for (unsigned int i = 0; i < 10; i++) {
+        //     glm::mat4 model = glm::mat4(1.0f);
+        //     model = glm::translate(model, cubePositions[i]);
+        //     float angle = 20.0f * i;
+        //     model = glm::rotate(model, (i % 3 == 0 ? (float)glfwGetTime() : 0.0f) * glm::radians(60.0f) + glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        //     shader.setMatrix("model", model);
+        //     glDrawArrays(GL_TRIANGLES, 0, vtxCount);
+        // }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
