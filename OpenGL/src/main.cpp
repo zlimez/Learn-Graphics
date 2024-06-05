@@ -7,16 +7,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "camera.hpp"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
+struct MouseInput {
+    Camera* cam;
+    bool firstMouse = true;
+    float lastX = 400.0f;
+    float lastY = 300.0f;
+};
 
-void error_callback(int error, const char* description) {
-    std::cerr << "GLFW Error: " << description << std::endl;
-}
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
 
-void processInput(GLFWwindow *window, float &visibilityRatio)
+void error_callback(int error, const char* description) { std::cerr << "GLFW Error: " << description << std::endl; }
+
+void processInput(GLFWwindow *window, float &visibilityRatio, Camera &cam, float deltaTime)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
@@ -30,7 +34,38 @@ void processInput(GLFWwindow *window, float &visibilityRatio)
         if (visibilityRatio < 0.0f) {
             visibilityRatio = 0.0f;
         }
+    } else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        cam.processKeyboard(Camera::FORWARD, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        cam.processKeyboard(Camera::BACKWARD, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        cam.processKeyboard(Camera::LEFT, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        cam.processKeyboard(Camera::RIGHT, deltaTime);
     }
+}
+
+void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+    MouseInput* input = static_cast<MouseInput*>(glfwGetWindowUserPointer(window));
+    if (input && input->cam) {
+        if (input->firstMouse) {
+            input->lastX = static_cast<float>(xpos);
+            input->lastY = static_cast<float>(ypos);
+            input->firstMouse = false;
+        }
+
+        float xoffset = static_cast<float>(xpos) - input->lastX;
+        float yoffset = input->lastY - static_cast<float>(ypos);
+        input->lastX = static_cast<float>(xpos);
+        input->lastY = static_cast<float>(ypos);
+
+        input->cam->processMouseMovement(xoffset, yoffset);
+    }
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    MouseInput* input = static_cast<MouseInput*>(glfwGetWindowUserPointer(window));
+    if (input && input->cam) input->cam->processMouseScroll(yoffset);
 }
 
 int main() {
@@ -88,15 +123,21 @@ int main() {
         glm::vec3( 1.5f,  0.2f, -1.5f), 
         glm::vec3(-1.3f,  1.0f, -1.5f)  
     };
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    shader.setMatrix("view", view);
-    glm::mat4 projection = glm::mat4(1.0f);
-    projection = glm::perspective(glm::radians(60.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    shader.setMatrix("projection", projection);
+
+    Camera cam(glm::vec3(0.0f, 0.0f, 3.0f), -90.0f, 0.0f);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    MouseInput mouseInput = { &cam };
+    glfwSetWindowUserPointer(window, &mouseInput);
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
-        processInput(window, visibilityRatio);
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        processInput(window, visibilityRatio, cam, deltaTime);
         glClear(GL_COLOR_BUFFER_BIT);
         glClear(GL_DEPTH_BUFFER_BIT);
         shader.setFloat("visibilityRatio", visibilityRatio);
@@ -112,6 +153,9 @@ int main() {
         // trans2 = glm::scale(trans2, sinf((float)glfwGetTime()) * glm::vec3(0.5, 0.5, 0.5) + glm::vec3(1.0, 1.0, 1.0));
         // shader.setMatrix("transform", trans2);
         // glDrawElements(GL_TRIANGLES, vtxCount, GL_UNSIGNED_INT, 0);
+
+        shader.setMatrix("view", cam.getViewMatrix());
+        shader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
 
         for (unsigned int i = 0; i < 10; i++) {
             glm::mat4 model = glm::mat4(1.0f);

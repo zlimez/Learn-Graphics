@@ -27,7 +27,7 @@ public:
     static const glm::vec3 worldUp;
     enum Movement { FORWARD, BACKWARD, LEFT, RIGHT };
 
-    Camera(glm::vec3 position, float yaw, float pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(1.0f), mouseSensitivity(0.01f), fov(45.0f) {
+    Camera(glm::vec3 position, float yaw, float pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(2.5f), mouseSensitivity(0.01f), fov(45.0f) {
         this->position = position;
         this->yaw = yaw;
         this->pitch = pitch;
@@ -35,6 +35,7 @@ public:
     }
 
     glm::mat4 getViewMatrix() { return glm::lookAt(position, position + front, up); }
+    float getFov() { return fov; }
 
     void processKeyboard(Movement direction, float deltaTime) {
         float velocity = movementSpeed * deltaTime;
