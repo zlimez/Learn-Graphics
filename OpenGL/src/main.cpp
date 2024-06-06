@@ -112,12 +112,17 @@ int main() {
     lightingShader.use();
     lightingShader.setVec3("lightColor", lightColor);
     lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+    lightingShader.setMatrix("model", glm::mat4(1.0f));
+    lightingShader.setFloat("ambientStr", 0.1f);
+    lightingShader.setFloat("specStr", 0.5f);
+    lightingShader.setFloat("shininess", 32.0f);
+    lightingShader.setVec3("lightPos", lightPos);
+
     lightSrcShader.use();
     lightSrcShader.setVec3("lightColor", lightColor);
 
-    auto cube = createCube(), lightCube = createCube();
+    auto cube = createCubeWithNorm();
     int cubeVAO = cube.second, cubeVtxCount = cube.first;
-    int lightCubeVAO = lightCube.second, lightCubeVtxCount = lightCube.first;
     float visibilityRatio = 0.5f;
     // glm::vec3 cubePositions[] = {
     //     glm::vec3( 0.0f,  0.0f,  0.0f), 
@@ -165,10 +170,8 @@ int main() {
         lightingShader.use();
         lightingShader.setMatrix("view", cam.getViewMatrix());
         lightingShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
-        lightingShader.setMatrix("model", glm::mat4(1.0f));
         glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
-        glBindVertexArray(lightCubeVAO);
         lightSrcShader.use();
         lightSrcShader.setMatrix("view", cam.getViewMatrix());
         lightSrcShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
@@ -176,7 +179,7 @@ int main() {
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightSrcShader.setMatrix("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, lightCubeVtxCount);
+        glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
         // for (unsigned int i = 0; i < 10; i++) {
         //     glm::mat4 model = glm::mat4(1.0f);
