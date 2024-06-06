@@ -105,6 +105,7 @@ int main() {
     // Shader shader("../src/shaders/fullVtx.glsl", "../src/shaders/textureEx.glsl");
     // tutTexture(shader);
     Shader lightingShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightObj.glsl"), lightSrcShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightSrc.glsl");
+    // Shader lightingShader("../src/shaders/gouraudVtx.glsl", "../src/shaders/gouraudFrag.glsl"), lightSrcShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightSrc.glsl"); // gourand lighting
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
     LightSrc lightSrc(lightPos, lightColor);
@@ -113,10 +114,9 @@ int main() {
     lightingShader.setVec3("lightColor", lightColor);
     lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
     lightingShader.setMatrix("model", glm::mat4(1.0f));
-    lightingShader.setFloat("ambientStr", 0.1f);
-    lightingShader.setFloat("specStr", 0.5f);
-    lightingShader.setFloat("shininess", 32.0f);
-    lightingShader.setVec3("lightPos", lightPos);
+    lightingShader.setFloat("ambientStr", 0.25f);
+    lightingShader.setFloat("specStr", 0.75f);
+    lightingShader.setFloat("shininess", 64.0f);
 
     lightSrcShader.use();
     lightSrcShader.setVec3("lightColor", lightColor);
@@ -167,18 +167,22 @@ int main() {
         // shader.setMatrix("transform", trans2);
         // glDrawElements(GL_TRIANGLES, vtxCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(cubeVAO);
-        lightingShader.use();
-        lightingShader.setMatrix("view", cam.getViewMatrix());
-        lightingShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
-        glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
         lightSrcShader.use();
         lightSrcShader.setMatrix("view", cam.getViewMatrix());
         lightSrcShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
         glm::mat4 model = glm::mat4(1.0f);
+        glm::vec3 lightRotAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+        model = glm::rotate(model, (float)glfwGetTime(), lightRotAxis);
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightSrcShader.setMatrix("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
+
+        lightingShader.use();
+        lightingShader.setMatrix("view", cam.getViewMatrix());
+        lightingShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
+        lightingShader.setVec3("lightPos", glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), lightRotAxis) * glm::vec4(lightPos, 1.0f));
         glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
         // for (unsigned int i = 0; i < 10; i++) {
