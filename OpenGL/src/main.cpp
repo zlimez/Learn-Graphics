@@ -108,15 +108,16 @@ int main() {
     // Shader lightingShader("../src/shaders/gouraudVtx.glsl", "../src/shaders/gouraudFrag.glsl"), lightSrcShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightSrc.glsl"); // gourand lighting
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-    LightSrc lightSrc(lightPos, lightColor);
+    // LightSrc lightSrc(lightPos, lightColor);
 
     lightingShader.use();
-    lightingShader.setVec3("lightColor", lightColor);
-    lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+    lightingShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+    lightingShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+    lightingShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    lightingShader.setFloat("material.shininess", 32.0f);
+    lightingShader.setVec3("light.position", lightPos);
+    lightingShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
     lightingShader.setMatrix("model", glm::mat4(1.0f));
-    lightingShader.setFloat("ambientStr", 0.25f);
-    lightingShader.setFloat("specStr", 0.75f);
-    lightingShader.setFloat("shininess", 64.0f);
 
     lightSrcShader.use();
     lightSrcShader.setVec3("lightColor", lightColor);
@@ -151,8 +152,7 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         processInput(window, visibilityRatio, cam, deltaTime);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // shader.setFloat("visibilityRatio", visibilityRatio);
 
         // glm::mat4 trans = glm::mat4(1.0f);
@@ -167,6 +167,9 @@ int main() {
         // shader.setMatrix("transform", trans2);
         // glDrawElements(GL_TRIANGLES, vtxCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(cubeVAO);
+        lightColor.x = sinf((float)glfwGetTime() * 2.0f);
+        lightColor.y = sinf((float)glfwGetTime() * 0.7f);
+        lightColor.z = sinf((float)glfwGetTime() * 1.3f);
 
         lightSrcShader.use();
         lightSrcShader.setMatrix("view", cam.getViewMatrix());
@@ -177,12 +180,18 @@ int main() {
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightSrcShader.setMatrix("model", model);
+        lightSrcShader.setVec3("lightColor", lightColor);
         glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
         lightingShader.use();
         lightingShader.setMatrix("view", cam.getViewMatrix());
         lightingShader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
-        lightingShader.setVec3("lightPos", glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), lightRotAxis) * glm::vec4(lightPos, 1.0f));
+        lightingShader.setVec3("light.position", glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), lightRotAxis) * glm::vec4(lightPos, 1.0f));
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+        
+        lightingShader.setVec3("light.ambient", ambientColor);
+        lightingShader.setVec3("light.diffuse", diffuseColor);
         glDrawArrays(GL_TRIANGLES, 0, cubeVtxCount);
 
         // for (unsigned int i = 0; i < 10; i++) {

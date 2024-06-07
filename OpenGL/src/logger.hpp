@@ -14,4 +14,11 @@ void printMat4(const glm::mat4& matrix) {
     }
 }
 
+void printVec3(const glm::vec3& vector) {
+    for (int i = 0; i < 3; ++i) {
+        std::cout << std::setw(8) << std::setprecision(4) << vector[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
 #endif
