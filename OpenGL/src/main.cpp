@@ -95,7 +95,7 @@ int main() {
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // Shader shader("../src/shaders/fullVtx.glsl", "../src/shaders/textureEx.glsl");
@@ -117,8 +117,9 @@ int main() {
     glfwSetScrollCallback(window, scrollCallback);
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
-    auto handles = prepParty("spot");
-    // auto lightSrcShader = prepStaticLightSrc();
+    auto handles = prepPartyCL();
+    // auto handles = prepParty("spot");
+    auto lightSrcShader = prepStaticLightSrc();
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
@@ -126,7 +127,8 @@ int main() {
         lastFrame = currentFrame;
         processInput(window, visibilityRatio, cam, deltaTime);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawParty(cam, handles.second[0], handles.first, true);
+        drawPtLights(cam, handles.second[0], lightSrcShader);
+        drawPartyCL(cam, handles.second[0], handles.first);
         // drawLight(cam, handles.second[0], lightSrcShader);
         // shader.setFloat("visibilityRatio", visibilityRatio);
 

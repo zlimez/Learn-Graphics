@@ -33,7 +33,7 @@ uniform Material material;
 uniform Light light; 
 
 void main() {
-    float dist = length((light.atCam ? vec3(0.0) : light.position) - FragPos);
+    float dist = length((light.atCam ? vec3(0.0) : view * vec4(light.position, 1.0)) - FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * (dist * dist));
 
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
