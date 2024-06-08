@@ -13,10 +13,13 @@ struct Material {
 };
 
 struct Light {
-    vec3 position;
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
   
 uniform mat4 view;
@@ -24,6 +27,8 @@ uniform Material material;
 uniform Light light; 
 
 void main() {
+    float dist = length(light.position - FragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * (dist * dist));
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
     vec3 norm = normalize(Normal);
@@ -35,12 +40,11 @@ void main() {
     vec3 viewDir = normalize(-FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    // vec3 specular = light.specular * spec * (vec3(1.0f) - vec3(texture(material.specular, TexCoords))); // inverted specular map
     vec3 specTex = vec3(texture(material.specular, TexCoords));
     vec3 specular = light.specular * spec * specTex;
 
-    vec3 emission = specTex == vec3(0.0) ? vec3(texture(material.emission, TexCoords)) : vec3(0.0);
+    // vec3 emission = specTex == vec3(0.0) ? vec3(texture(material.emission, TexCoords)) : vec3(0.0);
 
-    vec3 phong = ambient + diffuse + specular + emission;
+    vec3 phong = (ambient + diffuse + specular) * attenuation;
     FragColor = vec4(phong, 1.0);
 }

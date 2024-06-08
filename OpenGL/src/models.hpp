@@ -242,7 +242,7 @@ std::vector<unsigned int> getShaders() {
     return {orgShaderProgram, yellowShaderProgram};
 }
 
-std::pair<int, int> createObj(float vertices[], float vtcSize, bool hasColor, bool hasTexture) {
+std::pair<unsigned int, unsigned int> createObj(float vertices[], float vtcSize, bool hasColor, bool hasTexture) {
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -268,15 +268,15 @@ std::pair<int, int> createObj(float vertices[], float vtcSize, bool hasColor, bo
     return std::make_pair(vtcSize / sizeof(float) / stride, VAO);
 }
 
-std::pair<int, int> createCubeWithNorm() {
+std::pair<unsigned int, unsigned int> createCubeWithNorm() {
     return createObj(defCubeWithNorm, sizeof(defCubeWithNorm), true, false); // NOTE: Used norm as color
 }
 
-std::pair<int, int> createCube() {
+std::pair<unsigned int, unsigned int> createCube() {
     return createObj(defCube, sizeof(defCube), false, false); // NOTE: Used norm as color
 }
 
-std::pair<int, int> createCubeWithNormTex() {
+std::pair<unsigned int, unsigned int> createCubeWithNormTex() {
     return createObj(defCubeWithNormTex, sizeof(defCubeWithNormTex), true, true);
 }
 
