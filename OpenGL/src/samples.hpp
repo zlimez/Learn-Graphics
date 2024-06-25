@@ -4,8 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "models.hpp"
-#include "shader.hpp"
-#include "texture.hpp"
+#include "definitions/shader.hpp"
 #include "camera.hpp"
 
 const glm::vec3 cubePositions[] = {
@@ -109,7 +108,7 @@ Shader prepStaticLightSrc() {
     return lightSrcShader;
 }
 
-std::pair<Shader, std::vector<unsigned int>> prepPartyCL() {
+Shader prepHorrorLight() {
     Shader lightingShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightTypes/combined.glsl");
     lightingShader.use();
     // Directional light
@@ -158,72 +157,5 @@ std::pair<Shader, std::vector<unsigned int>> prepPartyCL() {
     lightingShader.setFloat("flashLight.quadratic", 0.032);			
     lightingShader.setFloat("flashLight.innerCone", glm::cos(glm::radians(10.0f)));
     lightingShader.setFloat("flashLight.outerCone", glm::cos(glm::radians(15.0f)));
-
-    lightingShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-    lightingShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-    lightingShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    lightingShader.setFloat("material.shininess", 32.0f);
-
-    unsigned int diffuseMap = loadTexture("../public/container2.png");
-    unsigned int specMap = loadTexture("../public/lighting_maps_specular_color.png");
-    unsigned int emissionMap = loadTexture("../public/matrix.jpg");
-    lightingShader.setInt("material.diffuse", 0);
-    lightingShader.setInt("material.specular", 1);
-    lightingShader.setInt("material.emission", 2);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, specMap);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, emissionMap);
-
-    auto cube = createCubeWithNormTex();
-    unsigned int cubeVAO = cube.second, cubeVtxCount = cube.first;
-    std::vector<unsigned int> handles = { cubeVAO, cubeVtxCount };
-    return std::make_pair(lightingShader, handles);
-}
-
-std::pair<Shader, std::vector<unsigned int>> prepParty(std::string lightType) {
-    Shader lightingShader("../src/shaders/fullVtx.glsl", ("../src/shaders/lightTypes/" + lightType + ".glsl").c_str());
-
-    lightingShader.use();
-    lightingShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-    lightingShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-    lightingShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    lightingShader.setFloat("material.shininess", 32.0f);
-    if (lightType == "direction") {
-        lightingShader.setVec3("light.direction", lightDir);
-    } else if (lightType == "point") {
-        lightingShader.setVec3("light.position", lightPos);
-        lightingShader.setFloat("light.constant",  1.0f);
-        lightingShader.setFloat("light.linear",    0.045f);
-        lightingShader.setFloat("light.quadratic", 0.0075f);	
-    } else if (lightType == "spot") {
-        lightingShader.setFloat("light.innerCone", glm::cos(glm::radians(12.5f)));
-        lightingShader.setFloat("light.outerCone", glm::cos(glm::radians(17.5f)));
-        lightingShader.setFloat("light.constant", 1.0f);
-        lightingShader.setFloat("light.linear", 0.045f);
-        lightingShader.setFloat("light.quadratic", 0.0075f);
-    }
-    lightingShader.setVec3("light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-    lightingShader.setVec3("light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-    lightingShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-    // lightingShader.setMatrix("model", glm::mat4(1.0f));
-    unsigned int diffuseMap = loadTexture("../public/container2.png");
-    unsigned int specMap = loadTexture("../public/lighting_maps_specular_color.png");
-    unsigned int emissionMap = loadTexture("../public/matrix.jpg");
-    lightingShader.setInt("material.diffuse", 0);
-    lightingShader.setInt("material.specular", 1);
-    lightingShader.setInt("material.emission", 2);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, specMap);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, emissionMap);
-
-    auto cube = createCubeWithNormTex();
-    unsigned int cubeVAO = cube.second, cubeVtxCount = cube.first;
-    std::vector<unsigned int> handles = { cubeVAO, cubeVtxCount };
-    return std::make_pair(lightingShader, handles);
+    return lightingShader;
 }

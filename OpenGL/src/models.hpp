@@ -1,10 +1,9 @@
-#ifndef MODELS_H
-#define MODELS_H
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
+
+#pragma once
 
 float defTri[] = {
     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
@@ -422,5 +421,3 @@ void draw2TriAlt() {
     glBindVertexArray(VAOs[1]);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
-
-#endif
