@@ -6,6 +6,7 @@
 #include "models.hpp"
 #include "definitions/shader.hpp"
 #include "camera.hpp"
+#include "utils.hpp"
 
 const glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f), 
@@ -28,10 +29,10 @@ const glm::vec3 pointLightPositions[] = {
 };
 
 glm::vec3 pointLightColors[] = {
-    glm::vec3(0.1f, 0.1f, 0.1f),
-    glm::vec3(0.1f, 0.1f, 0.1f),
-    glm::vec3(0.1f, 0.1f, 0.1f),
-    glm::vec3(0.3f, 0.1f, 0.1f)
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.6f, 0.2f, 0.2f)
 };
 
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
@@ -108,13 +109,13 @@ Shader prepStaticLightSrc() {
     return lightSrcShader;
 }
 
-Shader prepHorrorLight() {
+std::pair<Shader, std::vector<unsigned int>> prepPartyCL() {
     Shader lightingShader("../src/shaders/fullVtx.glsl", "../src/shaders/lightTypes/combined.glsl");
     lightingShader.use();
     // Directional light
     lightingShader.setVec3("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));		
-    lightingShader.setVec3("dirLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));	
-    lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.05f, 0.05f, 0.05)); 
+    lightingShader.setVec3("dirLight.ambient", glm::vec3(0.3f, 0.3f, 0.3f));	
+    lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.8f, 0.8f, 0.8)); 
     lightingShader.setVec3("dirLight.specular", glm::vec3(0.2f, 0.2f, 0.2f));
     // Point light 1
     lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);		
@@ -157,5 +158,23 @@ Shader prepHorrorLight() {
     lightingShader.setFloat("flashLight.quadratic", 0.032);			
     lightingShader.setFloat("flashLight.innerCone", glm::cos(glm::radians(10.0f)));
     lightingShader.setFloat("flashLight.outerCone", glm::cos(glm::radians(15.0f)));
-    return lightingShader;
+
+    unsigned int diffuseMap = TextureFromFile("container2.png", "../public", false);
+    unsigned int specMap = TextureFromFile("lighting_maps_specular_color.png", "../public", false);
+    unsigned int emissionMap = TextureFromFile("matrix.jpg", "../public", false);
+    lightingShader.setInt("material.texture_diffuse0", 0);
+    lightingShader.setInt("material.texture_specular0", 2);
+    lightingShader.setInt("material.emission", 3);
+    lightingShader.setFloat("material.shininess", 32.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, diffuseMap);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, specMap);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, emissionMap);
+
+    auto cube = createCubeWithNormTex();
+    unsigned int cubeVAO = cube.second, cubeVtxCount = cube.first;
+    std::vector<unsigned int> handles = { cubeVAO, cubeVtxCount };
+    return std::make_pair(lightingShader, handles);
 }

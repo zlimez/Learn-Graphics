@@ -121,7 +121,7 @@ int main()
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.5f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     float visibilityRatio = 0.5f;
@@ -134,21 +134,37 @@ int main()
     glfwSetScrollCallback(window, scrollCallback);
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    // auto handles = prepPartyCL();
+
+    // relative path from bin directory
+    Shader shader("../src/shaders/modelDemo/vtx.glsl", "../src/shaders/modelDemo/frag.glsl");
     char path[] = "../public/backpack/backpack.obj";
     Model backpack(path);
-    auto shader = prepHorrorLight();
+    auto model = glm::mat4(1.0f);
+    shader.use();
+    model = glm::translate(model, glm::vec3(0.0f));
+    model = glm::scale(model, glm::vec3(0.5f));
+    shader.setMatrix("model", model);
 
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
         processInput(window, visibilityRatio, cam, deltaTime);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader.use();
+        shader.setMatrix("view", cam.getViewMatrix());
+        shader.setMatrix("projection", glm::perspective(glm::radians(cam.getFov()), 800.0f / 600.0f, 0.1f, 100.0f));
         backpack.Draw(shader);
+        // handles.first.use();
+        // drawPartyCL(cam, handles.second[0], handles.first);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-        // TODO: Provide uniform val for view model projection
     }
 
     glfwTerminate();
